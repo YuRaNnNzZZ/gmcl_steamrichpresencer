@@ -1,0 +1,61 @@
+name: Build (Windows)
+
+on: [push]
+
+env:
+  PREMAKE_VS_TARGET: vs2022
+  PREMAKE_NAME: steamrichpresencer
+  PREMAKE_OS: windows
+  PREMAKE_BASE_PATH: projects
+
+  BUILD_CONFIGURATION: Release
+  MSBUILD_VS_VERION_RANGE: '[17.0, 18.0)'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Garry's Mod module common resources
+        uses: actions/checkout@v3
+        with:
+          repository: danielga/garrysmod_common
+          ref: refs/heads/x86-64-support-sourcesdk
+          path: garrysmod_common
+          submodules: recursive
+
+      - uses: abel0b/setup-premake@v2.2
+        with:
+          version: "5.0.0-beta2"
+
+      - name: Run premake
+        run:
+          premake5 --gmcommon=garrysmod_common --os=windows vs2022
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1
+        with:
+          msbuild-architecture: x64
+          vs-version: ${{env.MSBUILD_VS_VERION_RANGE}}
+
+      - name: Build x32
+        working-directory: ./${{env.PREMAKE_BASE_PATH}}/${{env.PREMAKE_OS}}/${{env.PREMAKE_VS_TARGET}}
+        run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=Win32 ${{env.PREMAKE_NAME}}.sln
+
+      - name: Upload x32
+        uses: actions/upload-artifact@v3
+        with:
+          name: steamrichpresencer-win32
+          path: ./${{env.PREMAKE_BASE_PATH}}/${{env.PREMAKE_OS}}/${{env.PREMAKE_VS_TARGET}}/x86/${{env.BUILD_CONFIGURATION}}/*.dll
+
+      - name: Build x64
+        working-directory: ./${{env.PREMAKE_BASE_PATH}}/${{env.PREMAKE_OS}}/${{env.PREMAKE_VS_TARGET}}
+        run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=x64 ${{env.PREMAKE_NAME}}.sln
+
+      - name: Upload x64
+        uses: actions/upload-artifact@v3
+        with:
+          name: steamrichpresencer-win64
+          path: ./${{env.PREMAKE_BASE_PATH}}/${{env.PREMAKE_OS}}/${{env.PREMAKE_VS_TARGET}}/x86_64/${{env.BUILD_CONFIGURATION}}/*.dll
