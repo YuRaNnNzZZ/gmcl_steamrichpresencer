@@ -1,0 +1,65 @@
+name: Build (Ubuntu Linux)
+
+on: [push, workflow_dispatch]
+
+env:
+  PREMAKE_TARGET: gmake2
+  PREMAKE_NAME: steamrichpresencer
+  PREMAKE_OS: linux
+  PREMAKE_BASE_PATH: projects
+
+  GMCOMMON_PATH: garrysmod_common
+  GMCOMMON_BRANCH: x86-64-support-sourcesdk
+
+  BUILD_CONFIGURATION: release
+  BUILD_CONFIGURATION_DIR: Release # make configurations are lowercase while output directory is not
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Garry's Mod module common resources
+        uses: actions/checkout@v3
+        with:
+          repository: danielga/garrysmod_common
+          ref: refs/heads/${{env.GMCOMMON_BRANCH}}
+          path: ${{env.GMCOMMON_PATH}}
+          submodules: recursive
+
+      - name: Setup premake
+        uses: abel0b/setup-premake@v2.2
+        with:
+          version: "5.0.0-beta2"
+
+      - name: Run premake
+        run:
+          premake5 --gmcommon=${{env.GMCOMMON_PATH}} --os=${{env.PREMAKE_OS}} ${{env.PREMAKE_TARGET}}
+
+      - name: Set up GCC
+        uses: egor-tensin/setup-gcc@v1
+        with:
+          version: latest
+          platform: x64
+
+      # - name: Build x32
+      #   working-directory: ./${{env.PREMAKE_BASE_PATH}}/${{env.PREMAKE_OS}}/${{env.PREMAKE_TARGET}}
+      #   run: make config=${{env.BUILD_CONFIGURATION}}_x86
+
+      # - name: Upload x32
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: ${{env.PREMAKE_NAME}}-linux32
+      #     path: ./${{env.PREMAKE_BASE_PATH}}/${{env.PREMAKE_OS}}/${{env.PREMAKE_TARGET}}/x86/${{env.BUILD_CONFIGURATION_DIR}}/*.dll
+
+      - name: Build x64
+        working-directory: ./${{env.PREMAKE_BASE_PATH}}/${{env.PREMAKE_OS}}/${{env.PREMAKE_TARGET}}
+        run: make config=${{env.BUILD_CONFIGURATION}}_x86_64
+
+      - name: Upload x64
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{env.PREMAKE_NAME}}-linux64
+          path: ./${{env.PREMAKE_BASE_PATH}}/${{env.PREMAKE_OS}}/${{env.PREMAKE_TARGET}}/x86_64/${{env.BUILD_CONFIGURATION_DIR}}/*.dll
