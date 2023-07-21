@@ -4,8 +4,7 @@ A simple Garry's Mod module that adds ability to change your Rich Presence from 
 It wraps [this function](https://partner.steamgames.com/doc/api/ISteamFriends#SetRichPresence) as `steamworks.SetRichPresence(String presenceKey, String presenceValue)`
 
 ## Installation
-- Switch Garry's Mod to `x86-64` branch
-- Download the build for your OS from releases
+- Download the build for your OS (and game branch/version) from releases
 - Unpack the dll file to `steamapps/common/GarrysMod/garrysmod/lua/bin`
 
 ## Example Usage
